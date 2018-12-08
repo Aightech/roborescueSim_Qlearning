@@ -84,7 +84,10 @@ public class Qlearning {
     	//System.out.println("size : " + Integer.toString(m_Qvalues.length));
     	m_Qvalues[indexQstate(m_state)][m_action] = Q;
     	
-    	m_action = 2;//chooseAction();
+    	computeProbaAction();
+    	
+    	//m_action = 2;
+    	
     	System.out.println("action : " + Integer.toString(m_action));
     	m_past_state = m_state;
     	m_reward = 0;
@@ -189,19 +192,7 @@ public class Qlearning {
     	return m_lambda * (reward + m_gamma * max_Q_new + (1 - m_lambda)* m_Qvalues[indexQstate(past_state)][past_action]);
     	//return Qval_new; 
     }
-    
-    /**
-     * Choose the action to do in a given state
-     * @return
-     */
-    private int chooseAction()
-    {
-    	int action = 0;
-    	double explore = Math.random();
-    	//if(explore < m_explore_exploit_ratio)
-    		
-    	return action; 
-    }
+
     
     private void computeProbaAction() 
     {

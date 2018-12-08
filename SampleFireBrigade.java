@@ -50,7 +50,9 @@ public class SampleFireBrigade extends AbstractSampleAgent<FireBrigade> {
         maxPower = config.getIntValue(MAX_POWER_KEY);
         Logger.info("Sample fire brigade connected: max extinguish distance = " + maxDistance + ", max power = " + maxPower + ", max tank = " + maxWater);
         System.out.println("Fire agent lauched");
-        qlearning.exportQvalues("Qvalues/test.txt");
+        
+        qlearning.importQvalues("Qvalues/test.txt");
+        
         //qlearning.importQvalues("test.txt");
         //qlearning.exportQvalues("test2.txt");
 }
@@ -59,6 +61,8 @@ public class SampleFireBrigade extends AbstractSampleAgent<FireBrigade> {
     @Override
     protected void think(int time, ChangeSet changed, Collection<Command> heard) 
     {
+    	if(time%5==0)
+    		qlearning.exportQvalues("Qvalues/test.txt");
     	System.out.println("Fire agent think");
     	
     	int[] state = getState(time,changed,heard);
@@ -105,6 +109,7 @@ public class SampleFireBrigade extends AbstractSampleAgent<FireBrigade> {
 		            	 if(path!=null)
 		            	 {
 		            		 sendMove(time, path);
+		            		 System.out.println("Fire agent do : go burning building");
 		            		 break;
 		            	 }		            	 
 		             }
@@ -118,6 +123,7 @@ public class SampleFireBrigade extends AbstractSampleAgent<FireBrigade> {
 	    		List<EntityID> path;
 	    		path = randomWalk();
 	            sendMove(time, path);
+	            System.out.println("Fire agent do : go random");
 	    		break;
 	    	}
 	    	case 4://extinguish
@@ -128,6 +134,7 @@ public class SampleFireBrigade extends AbstractSampleAgent<FireBrigade> {
 	                if (model.getDistance(getID(), next) <= maxDistance)
 	                {
 	                    sendExtinguish(time, next, maxPower);
+	                    System.out.println("Fire agent do : extinguish");
 	                    break;
 	                }
 	            }
