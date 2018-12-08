@@ -51,7 +51,7 @@ public class SampleFireBrigade extends AbstractSampleAgent<FireBrigade> {
         Logger.info("Sample fire brigade connected: max extinguish distance = " + maxDistance + ", max power = " + maxPower + ", max tank = " + maxWater);
         System.out.println("Fire agent lauched");
         
-        qlearning.importQvalues("Qvalues/test.txt");
+        qlearning.importQvalues("src/sample/Qvalues/test.txt");
         
         //qlearning.importQvalues("test.txt");
         //qlearning.exportQvalues("test2.txt");
@@ -62,7 +62,7 @@ public class SampleFireBrigade extends AbstractSampleAgent<FireBrigade> {
     protected void think(int time, ChangeSet changed, Collection<Command> heard) 
     {
     	if(time%5==0)
-    		qlearning.exportQvalues("Qvalues/test.txt");
+    		qlearning.exportQvalues("src/sample/Qvalues/test.txt");
     	System.out.println("Fire agent think");
     	
     	int[] state = getState(time,changed,heard);
