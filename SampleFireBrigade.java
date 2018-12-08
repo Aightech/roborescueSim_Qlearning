@@ -32,6 +32,7 @@ public class SampleFireBrigade extends AbstractSampleAgent<FireBrigade> {
     private int maxPower;
     private int nbFeatures=7;
     private int nbActions=5;
+    private int turn_score =0;
 
     private Qlearning qlearning = new Qlearning(nbFeatures, new int[] {2,2,2,2,2,2,2}, nbActions, 1, 1, 1);
 
@@ -64,87 +65,103 @@ public class SampleFireBrigade extends AbstractSampleAgent<FireBrigade> {
     	
     	qlearning.setNewState(state);
 
-    	qlearning.setNewReward(0);
+    	qlearning.setNewReward(turn_score);
     	
     	qlearning.update();
     	
     	int action = qlearning.getNewAction();
     	
+    	turn_score =0;
     	switch(action)
     	{
-    	case 0:
-    		System.out.println("Fire agent do : rest");
-    		sendRest(time);
-    		break;
-    	case 1:
-    	{
-    		sendSubscribe(time, 1);
-    		System.out.println("Fire agent do : subscribe");
-    		break;
-    	}
-    	case 2:
-    	{
-    		List<EntityID> path = search.breadthFirstSearch(me().getPosition(), refugeIDs);
-            if (path != null)
-            {
-                Logger.info("Moving to refuge");
-                System.out.println("Fire agent do : go refuge");
-                sendMove(time, path);
-                break;
-            }
-            else
-            	System.out.println("Fire agent didn't find refuge");
-    	}
-    	case 3:
-    	{
-    		System.out.println("Fire agent do : random move");
-    		List<EntityID> path;
-    		path = randomWalk();
-            Logger.info("Moving randomly");
-            sendMove(time, path);
-    		break;
-    	}
-    	case 4:
-    	{
-    		 Collection<EntityID> all = getBurningBuildings();
-    		 System.out.println(all.toString());
-    		 double c = me().getWater();
-    		 System.out.println("Water: " + Double.toString(c));
-             // Can we extinguish any right now?
-             for (EntityID next : all) 
-             {
-                 if (model.getDistance(getID(), next) <= maxDistance) 
-                 {
-                    Logger.info("Extinguishing " + next);
-		    		sendExtinguish(time, next, maxPower);
-		    		System.out.println("Fire agent do : extinguish");
-		            //sendSpeak(time, 1, ("Extinguishing " + next).getBytes());
-		            break;
-                 }
-              
-             }
-             System.out.println("Fire agent do : no fire ==> random move");
-             List<EntityID> path ;
-             if(all != null)
-             {
-            	 path = search.breadthFirstSearch(me().getPosition(), all);
-            	 if(path!=null)
-            	 {
-                     System.out.println("Fire agent do : move to fire");
-
-            		 sendMove(time, path);
-            		 
-            		 break;
-            	 }
-             }
-             System.out.println("Fire agent do : no fire ==> random move");
-
-             path = randomWalk();
-             Logger.info("Moving to building");
-             sendMove(time, path);
-     		break;
-             
-    	}
+	    	case 0://do nothing
+	    	{
+	    		System.out.println("Fire agent do : rest");
+	    		sendRest(time);
+	    		break;
+	    	}
+	    	case 1://go refuge
+	    	{
+	    		List<EntityID> path = search.breadthFirstSearch(me().getPosition(), refugeIDs);
+	            if (path != null)
+	            {
+	                Logger.info("Moving to refuge");
+	                System.out.println("Fire agent do : go refuge");
+	                sendMove(time, path);
+	                break;
+	            }
+	            else
+	            	System.out.println("Fire agent didn't find refuge");
+	    	}
+	    	case 2://go burning building
+	    	{
+	    		List<EntityID> path;
+	    		 Collection<EntityID> all = getBurningBuildings();
+	    		 for (EntityID next : all) 
+	    		 {
+	    			 if(next != null)
+		             {
+		            	 path = search.breadthFirstSearch(me().getPosition(), all);
+		            	 if(path!=null)
+		            	 {
+		            		 sendMove(time, path);
+		            		 break;
+		            	 }		            	 
+		             }
+	    		 }
+//	             // Can we extinguish any right now?
+//	             for (EntityID next : all) 
+//	             {
+//	                 if (model.getDistance(getID(), next) <= maxDistance) 
+//	                 {
+//	                    Logger.info("Extinguishing " + next);
+//			    		sendExtinguish(time, next, maxPower);
+//			    		System.out.println("Fire agent do : extinguish");
+//			            //sendSpeak(time, 1, ("Extinguishing " + next).getBytes());
+//			            break;
+//	                 }
+//	              
+//	             }
+//	             System.out.println("Fire agent do : no fire ==> random move");
+//	             for (EntityID next : all) {
+//	                 if (model.getDistance(getID(), next) <= maxDistance) {
+//	                     Logger.info("Extinguishing " + next);
+//	                     sendExtinguish(time, next, maxPower);
+//	                     sendSpeak(time, 1, ("Extinguishing " + next).getBytes());
+//	                     return;
+//	                 }
+//	     }
+//	             List<EntityID> path ;
+//	             
+//	             System.out.println("Fire agent do : no fire ==> random move");
+//	
+//	             path = randomWalk();
+//	             Logger.info("Moving to building");
+//	             sendMove(time, path);
+//	     		break;
+	             
+	    	}
+	    	case 3://go random
+	    	{
+	    		List<EntityID> path;
+	    		path = randomWalk();
+	            sendMove(time, path);
+	    		break;
+	    	}
+	    	case 4://extinguish
+	    	{
+	    		Collection<EntityID> all = getBurningBuildings();
+	            for (EntityID next : all) 
+	            {
+	                if (model.getDistance(getID(), next) <= maxDistance)
+	                {
+	                    sendExtinguish(time, next, maxPower);
+	                    break;
+	                }
+	            }
+	    	}
+	    	
+	    	
     	}
     	
     }
