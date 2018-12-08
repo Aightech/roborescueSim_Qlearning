@@ -90,8 +90,8 @@ public class SampleFireBrigade extends AbstractSampleAgent<FireBrigade> {
 	                sendMove(time, path);
 	                break;
 	            }
-	            else
-	            	System.out.println("Fire agent didn't find refuge");
+	            turn_score -= 1;
+	            break;
 	    	}
 	    	case 2://go burning building
 	    	{
@@ -101,7 +101,7 @@ public class SampleFireBrigade extends AbstractSampleAgent<FireBrigade> {
 	    		 {
 	    			 if(next != null)
 		             {
-		            	 path = search.breadthFirstSearch(me().getPosition(), all);
+		            	 path = search.breadthFirstSearch(me().getPosition(), next);
 		            	 if(path!=null)
 		            	 {
 		            		 sendMove(time, path);
@@ -109,36 +109,8 @@ public class SampleFireBrigade extends AbstractSampleAgent<FireBrigade> {
 		            	 }		            	 
 		             }
 	    		 }
-//	             // Can we extinguish any right now?
-//	             for (EntityID next : all) 
-//	             {
-//	                 if (model.getDistance(getID(), next) <= maxDistance) 
-//	                 {
-//	                    Logger.info("Extinguishing " + next);
-//			    		sendExtinguish(time, next, maxPower);
-//			    		System.out.println("Fire agent do : extinguish");
-//			            //sendSpeak(time, 1, ("Extinguishing " + next).getBytes());
-//			            break;
-//	                 }
-//	              
-//	             }
-//	             System.out.println("Fire agent do : no fire ==> random move");
-//	             for (EntityID next : all) {
-//	                 if (model.getDistance(getID(), next) <= maxDistance) {
-//	                     Logger.info("Extinguishing " + next);
-//	                     sendExtinguish(time, next, maxPower);
-//	                     sendSpeak(time, 1, ("Extinguishing " + next).getBytes());
-//	                     return;
-//	                 }
-//	     }
-//	             List<EntityID> path ;
-//	             
-//	             System.out.println("Fire agent do : no fire ==> random move");
-//	
-//	             path = randomWalk();
-//	             Logger.info("Moving to building");
-//	             sendMove(time, path);
-//	     		break;
+	    		 turn_score -= 1;
+	    		 break;
 	             
 	    	}
 	    	case 3://go random
@@ -159,6 +131,8 @@ public class SampleFireBrigade extends AbstractSampleAgent<FireBrigade> {
 	                    break;
 	                }
 	            }
+	            turn_score -= 1;
+	            break;
 	    	}
 	    	
 	    	
@@ -174,32 +148,43 @@ public class SampleFireBrigade extends AbstractSampleAgent<FireBrigade> {
     	FireBrigade me = me();
     	int[] state = new int[nbFeatures];
     	
-    	state[0] = (time == config.getIntValue(kernel.KernelConstants.IGNORE_AGENT_COMMANDS_KEY))?0:1;
+    	
     	// Are we currently filling with water?
-    	state[1] = (me.isWaterDefined() && me.getWater() < maxWater && location() instanceof Refuge)?0:1;
-         // Are we out of water?
-    	state[2] = (me.isWaterDefined() && me.getWater() == 0) ? 0:1;
+    	state[0] = (me.isWaterDefined() && me.getWater() < maxWater && location() instanceof Refuge)?1:0;
+        
+    	// Are we out of water?
+    	state[1] = (me.isWaterDefined() && me.getWater() == 0) ? 0:1;
     	
-        // Head for a refuge
+        // close to a refuge 
         List<EntityID> path = search.breadthFirstSearch(me().getPosition(), refugeIDs);
-        state[3] = (path != null) ? 0:1;
+        state[2] = (path != null && path.size() < 4) ? 1:0;
          
-         // Find all buildings that are on fire
+        // very close to a refuge 
+        state[3] = (path != null && path.size() < 2) ? 1:0;
+        
+         // Is there buildings that are on fire
          Collection<EntityID> all = getBurningBuildings();
-         // Can we extinguish any right now?
-         for (EntityID next : all) {
-             if (model.getDistance(getID(), next) <= maxDistance) {
-                 Logger.info("Extinguishing " + next);
-             }
+         state[4] = (all != null && all.size() < 1) ? 0:1;
+         
+         // // Is there buildings that are on fire and close
+         boolean burningClose=false;
+         boolean burningClose2=false;
+         for (EntityID next : all) 
+         {
+        	 path = search.breadthFirstSearch(me().getPosition(), next);
+        	 
+        	 if(path.size() < 4)
+        		 burningClose = true;
+        	 if (model.getDistance(getID(), next) <= maxDistance)
+        		 burningClose2 = true;
+
+        		 
          }
-         // Plan a path to a fire
-         for (EntityID next : all) {
-             if (path != null) {
-                 Logger.info("Moving to target");
-       
-             }
-         }
-    	
+         state[5] = (burningClose)?1:0;
+         state[6] = (burningClose2)?1:0;
+         System.out.println(me.getHP());
+         System.out.println("Fire agent state [" + ((state[0]==0)?"not filling":"filling") + " , "+ ((state[1]==0)?"filled":"empty") + " , "+ ((state[2]==0)?"not close to R":"close to R") + " , "+ ((state[3]==0)?"not very close to R":"very close to R") + " , "+ ((state[4]==0)?"no fire":"building on fire") + " , "+ ((state[5]==0)?"not close to 1":"close to 1") + " , "+ ((state[6]==0)?"not close to 2":"close to 2") + " , ");
+
     	return state; 
     }
     

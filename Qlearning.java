@@ -84,7 +84,7 @@ public class Qlearning {
     	//System.out.println("size : " + Integer.toString(m_Qvalues.length));
     	m_Qvalues[indexQstate(m_state)][m_action] = Q;
     	
-    	m_action = 4;//chooseAction();
+    	m_action = 2;//chooseAction();
     	System.out.println("action : " + Integer.toString(m_action));
     	m_past_state = m_state;
     	m_reward = 0;
