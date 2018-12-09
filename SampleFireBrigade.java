@@ -183,8 +183,8 @@ public class SampleFireBrigade extends AbstractSampleAgent<FireBrigade> {
     	// Are we currently filling with water?
     	state[0] = (me.isWaterDefined() && me.getWater() < maxWater && location() instanceof Refuge)?1:0;
         
-    	// Are we out of water?
-    	state[1] = (me.isWaterDefined() && me.getWater() == 0) ? 1:0;
+    	// Are we filled with water?
+    	state[1] = (me.isWaterDefined() && me.getWater() == 0) ? 0:1;
     	
         // close to a refuge 
         List<EntityID> path = search.breadthFirstSearch(me().getPosition(), refugeIDs);
@@ -195,6 +195,7 @@ public class SampleFireBrigade extends AbstractSampleAgent<FireBrigade> {
         
          // Is there buildings that are on fire
          Collection<EntityID> all = getBurningBuildings();
+         System.out.println("building in fire: " + all.toString());
          state[4] = (all != null && all.size() < 1) ? 0:1;
          
          // // Is there buildings that are on fire and close
@@ -213,8 +214,9 @@ public class SampleFireBrigade extends AbstractSampleAgent<FireBrigade> {
          }
          state[5] = (burningClose)?1:0;
          state[6] = (burningClose2)?1:0;
-         System.out.println(me.getHP());
-         System.out.println("Fire agent state [" + ((state[0]==0)?"not filling":"filling") + " , "+ ((state[1]==0)?"filled":"empty") + " , "+ ((state[2]==0)?"not close to R":"close to R") + " , "+ ((state[3]==0)?"not very close to R":"very close to R") + " , "+ ((state[4]==0)?"no fire":"building on fire") + " , "+ ((state[5]==0)?"not close to 1":"close to 1") + " , "+ ((state[6]==0)?"not close to 2":"close to 2") + " , ");
+         System.out.println("Level water: " + Integer.toString(me.getWater()));
+         System.out.println("hp: " + Integer.toString(me.getHP()));
+         System.out.println("Fire agent state [" + ((state[0]==0)?"not filling":"filling") + " , "+ ((state[1]==0)?"empty":"filled") + " , "+ ((state[2]==0)?"not close to R":"close to R") + " , "+ ((state[3]==0)?"not very close to R":"very close to R") + " , "+ ((state[4]==0)?"no fire":"building on fire") + " , "+ ((state[5]==0)?"not close to 1":"close to 1") + " , "+ ((state[6]==0)?"not close to 2":"close to 2") + " ] ");
 
     	return state; 
     }
