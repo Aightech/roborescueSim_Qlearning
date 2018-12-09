@@ -188,7 +188,11 @@ public class Qlearning {
      */
     private double computeQvalue(int[] past_state, int past_action, int[] new_state , double reward)
     {
-    	double max_Q_new=0;
+    	double max_Q_new=-10000;
+    	int index_new_state = indexQstate(new_state);
+    	for(int a =0;a<m_NB_actions;a++)
+    		if(m_Qvalues[index_new_state][a] > max_Q_new)
+    			 max_Q_new = m_Qvalues[index_new_state][a];
     	return m_lambda * (reward + m_gamma * max_Q_new + (1 - m_lambda)* m_Qvalues[indexQstate(past_state)][past_action]);
     	//return Qval_new; 
     }
