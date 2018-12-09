@@ -42,7 +42,7 @@ public class SampleFireBrigade extends AbstractSampleAgent<FireBrigade> {
     private int last_hp = 10000;
     private double last_nb_fire_building = 0;
     private double building_weight=10;
-    private double hp_weight = 0.1;
+    private double hp_weight = 10;
 
 
     private Qlearning qlearning = new Qlearning(nbFeatures, new int[] {2,2,2,2,2,2,2}, nbActions, 1, 1, 1);
@@ -62,8 +62,7 @@ public class SampleFireBrigade extends AbstractSampleAgent<FireBrigade> {
         Logger.info("Sample fire brigade connected: max extinguish distance = " + maxDistance + ", max power = " + maxPower + ", max tank = " + maxWater);
         System.out.println("Fire agent lauched");
         
-        
-        qlearning.importQvalues("src/sample/Qvalues/test.txt");
+        qlearning.importQvalues("src/sample/Qvalues/model.txt");
         
         
         //qlearning.importQvalues("test.txt");
@@ -96,6 +95,7 @@ public class SampleFireBrigade extends AbstractSampleAgent<FireBrigade> {
 	    	{
 	    		System.out.println("Fire agent do : rest");
 	    		sendRest(time);
+	    		turn_score -= 10;
 	    		break;
 	    	}
 	    	case 1://go refuge
@@ -184,7 +184,7 @@ public class SampleFireBrigade extends AbstractSampleAgent<FireBrigade> {
     	state[0] = (me.isWaterDefined() && me.getWater() < maxWater && location() instanceof Refuge)?1:0;
         
     	// Are we out of water?
-    	state[1] = (me.isWaterDefined() && me.getWater() == 0) ? 0:1;
+    	state[1] = (me.isWaterDefined() && me.getWater() == 0) ? 1:0;
     	
         // close to a refuge 
         List<EntityID> path = search.breadthFirstSearch(me().getPosition(), refugeIDs);

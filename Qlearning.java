@@ -42,7 +42,23 @@ public class Qlearning {
     private double m_temperature;
     private double[] m_probaAction;
     
-    
+    public static void main(String[] args) 
+    {
+    	Qlearning qlearning = new Qlearning(7, new int[] {2,2,2,2,2,2,2}, 5, 1, 1, 1);
+    	qlearning.importQvalues("src/sample/Qvalues/model.txt");
+    	qlearning.exportQvalues("src/sample/Qvalues/model1.txt");
+		System.out.println(qlearning.indexQstate(new int[] {1,0,0,0,0,0,0}));
+		qlearning.setNewState(new int[] {0,0,0,0,0,0,1});
+
+    	qlearning.setNewReward(0);
+    	
+    	qlearning.update();
+    	
+    	int action = qlearning.getNewAction();
+    	System.out.println(action);
+    	qlearning.exportQvalues("src/sample/Qvalues/model2.txt");
+
+    }
     
     
     public Qlearning(int nbFeatures, int[] rangeFeatures, int nbAction, double lambda, double gamma, double temperature) {
@@ -85,6 +101,7 @@ public class Qlearning {
     	m_Qvalues[indexQstate(m_state)][m_action] = Q;
     	
     	computeProbaAction();
+    	System.out.println("action chosen : " + Integer.toString(m_action));
     	
     	//m_action = 2;
     	
@@ -170,7 +187,7 @@ public class Qlearning {
      * @param state current state
      * @return the index of the state
      */
-    private int indexQstate(int[] state)
+    public int indexQstate(int[] state)
     {
     	int index = 0;
     	for(int i = 0; i< m_NB_features;i++)
@@ -202,14 +219,25 @@ public class Qlearning {
     {
     	double denominator = 0;
     	int indexState = indexQstate(m_past_state); 
-    	for(int i = 0 ; i < m_NB_actions ; i++)
-    		denominator += Math.exp(- m_Qvalues[indexState][i]/ m_temperature);
     	
-    	m_probaAction[0] = Math.exp(- m_Qvalues[indexQstate(m_past_state)][0]/ m_temperature) / denominator;
+//    	for(int i = 0 ; i < m_NB_actions ; i++)
+//    		System.out.println("val : " + Double.toString(m_Qvalues[indexState][i]));
+    	
+    	for(int i = 0 ; i < m_NB_actions ; i++)
+    		denominator += Math.exp(m_Qvalues[indexState][i]/ m_temperature);
+    	
+    	m_probaAction[0] = Math.exp(m_Qvalues[indexQstate(m_past_state)][0]/ m_temperature) / denominator;
     	for(int i = 1 ; i < m_NB_actions ; i++)
-    		m_probaAction[i] = m_probaAction[i-1] + Math.exp(- m_Qvalues[indexQstate(m_past_state)][i]/ m_temperature) / denominator;
+    		m_probaAction[i] = m_probaAction[i-1] + Math.exp(m_Qvalues[indexQstate(m_past_state)][i]/ m_temperature) / denominator;
+    	
+//    	for(int i = 0 ; i < m_NB_actions ; i++)
+//    		System.out.println("proba : " + Double.toString(Math.exp(m_Qvalues[indexQstate(m_past_state)][i]/ m_temperature) / denominator));
+//    	
+//    	for(int i = 0 ; i < m_NB_actions ; i++)
+//    		System.out.println("proba2 : " + Double.toString(m_probaAction[i]));
     	
     	double choice = Math.random();
+    	//System.out.println("choice: " + Double.toString(choice));
     	for(int i = 0 ; i < m_NB_actions ; i++)
     		if(choice < m_probaAction[i])
     		{
