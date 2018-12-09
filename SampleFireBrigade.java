@@ -1,6 +1,7 @@
 package sample;
 
 import static rescuecore2.misc.Handy.objectsToIDs;
+import static rescuecore2.misc.java.JavaTools.instantiate;
 
 import java.util.List;
 import java.util.ArrayList;
@@ -11,6 +12,8 @@ import java.util.EnumSet;
 import rescuecore2.worldmodel.EntityID;
 import rescuecore2.worldmodel.ChangeSet;
 import rescuecore2.messages.Command;
+import rescuecore2.Constants;
+import rescuecore2.Timestep;
 import rescuecore2.log.Logger;
 
 import rescuecore2.standard.entities.StandardEntity;
@@ -18,6 +21,9 @@ import rescuecore2.standard.entities.StandardEntityURN;
 import rescuecore2.standard.entities.Building;
 import rescuecore2.standard.entities.Refuge;
 import rescuecore2.standard.entities.FireBrigade;
+
+import rescuecore2.score.ScoreFunction;
+
 
 /**
    A sample fire brigade agent.
@@ -33,6 +39,11 @@ public class SampleFireBrigade extends AbstractSampleAgent<FireBrigade> {
     private int nbFeatures=7;
     private int nbActions=5;
     private int turn_score =0;
+    private int last_hp = 10000;
+    private double last_nb_fire_building = 0;
+    private double building_weight=10;
+    private double hp_weight = 0.1;
+
 
     private Qlearning qlearning = new Qlearning(nbFeatures, new int[] {2,2,2,2,2,2,2}, nbActions, 1, 1, 1);
 
@@ -51,7 +62,9 @@ public class SampleFireBrigade extends AbstractSampleAgent<FireBrigade> {
         Logger.info("Sample fire brigade connected: max extinguish distance = " + maxDistance + ", max power = " + maxPower + ", max tank = " + maxWater);
         System.out.println("Fire agent lauched");
         
+        
         qlearning.importQvalues("src/sample/Qvalues/test.txt");
+        
         
         //qlearning.importQvalues("test.txt");
         //qlearning.exportQvalues("test2.txt");
@@ -75,6 +88,7 @@ public class SampleFireBrigade extends AbstractSampleAgent<FireBrigade> {
     	
     	int action = qlearning.getNewAction();
     	
+		
     	turn_score =0;
     	switch(action)
     	{
@@ -144,6 +158,16 @@ public class SampleFireBrigade extends AbstractSampleAgent<FireBrigade> {
 	    	
 	    	
     	}
+    	
+    	//loose HP
+    	turn_score -= hp_weight*(last_hp - me().getHP());
+    	last_hp = me().getHP();
+    	
+    	Collection<EntityID> all = getBurningBuildings();
+    	last_nb_fire_building = all.size() - last_nb_fire_building;
+    	turn_score -= building_weight*last_nb_fire_building;
+    	last_nb_fire_building += (all.size() - last_nb_fire_building)*0.2;
+
     	
     }
 
@@ -224,5 +248,6 @@ public class SampleFireBrigade extends AbstractSampleAgent<FireBrigade> {
         }
         return search.breadthFirstSearch(me().getPosition(), objectsToIDs(targets));
     }
+    
 }
 
