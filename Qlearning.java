@@ -222,8 +222,9 @@ public class Qlearning {
     	double denominator = 0;
     	int indexState = indexQstate(m_state); 
     	
-//    	for(int i = 0 ; i < m_NB_actions ; i++)
-//    		System.out.println("val : " + Double.toString(m_Qvalues[indexState][i]));
+    	System.out.println("val : " + indexState);
+    	for(int i = 0 ; i < m_NB_actions ; i++)
+    		System.out.println("val : " + Double.toString(m_Qvalues[indexState][i]));
     	
     	for(int i = 0 ; i < m_NB_actions ; i++)
     		denominator += Math.exp(m_Qvalues[indexState][i]/ m_temperature);

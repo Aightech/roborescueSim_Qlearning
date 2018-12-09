@@ -8,6 +8,7 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.EnumSet;
+import java.util.HashSet;
 
 import rescuecore2.worldmodel.EntityID;
 import rescuecore2.worldmodel.ChangeSet;
@@ -43,6 +44,7 @@ public class SampleFireBrigade extends AbstractSampleAgent<FireBrigade> {
     private double last_nb_fire_building = 0;
     private double building_weight=10;
     private double hp_weight = 10;
+    private Collection<EntityID> unexploredBuildings;
 
 
     private Qlearning qlearning = new Qlearning(nbFeatures, new int[] {2,2,2,2,2,2,2}, nbActions, 1, 1, 1);
@@ -61,6 +63,7 @@ public class SampleFireBrigade extends AbstractSampleAgent<FireBrigade> {
         maxPower = config.getIntValue(MAX_POWER_KEY);
         Logger.info("Sample fire brigade connected: max extinguish distance = " + maxDistance + ", max power = " + maxPower + ", max tank = " + maxWater);
         System.out.println("Fire agent lauched");
+        unexploredBuildings = new HashSet<EntityID>(buildingIDs);
         
         qlearning.importQvalues("src/sample/Qvalues/model.txt");
         
@@ -76,6 +79,9 @@ public class SampleFireBrigade extends AbstractSampleAgent<FireBrigade> {
     	if(time%5==0)
     		qlearning.exportQvalues("src/sample/Qvalues/test.txt");
     	System.out.println("Fire agent think");
+    	updateUnexploredBuildings(changed);
+    	if(unexploredBuildings.size() < 10)
+    		unexploredBuildings = new HashSet<EntityID>(buildingIDs);
     	
     	int[] state = getState(time,changed,heard);
     	
@@ -134,10 +140,11 @@ public class SampleFireBrigade extends AbstractSampleAgent<FireBrigade> {
 	    	}
 	    	case 3://go random
 	    	{
-	    		List<EntityID> path;
-	    		path = randomWalk();
+	    		List<EntityID> path = search.breadthFirstSearch(me().getPosition(), unexploredBuildings);
+	            if(path==null)
+	            	path = randomWalk();
 	            sendMove(time, path);
-	            System.out.println("Fire agent do : go random");
+	            System.out.println("Fire agent do : go explore");
 	    		break;
 	    	}
 	    	case 4://extinguish
@@ -181,21 +188,23 @@ public class SampleFireBrigade extends AbstractSampleAgent<FireBrigade> {
     	
     	
     	// Are we currently filling with water?
-    	state[0] = (me.isWaterDefined() && me.getWater() < maxWater && location() instanceof Refuge)?1:0;
+    	state[0] = (me.isWaterDefined() && me.getWater() < 14000) ? 0:1; //(me.isWaterDefined() && me.getWater() < maxWater && location() instanceof Refuge)?1:0;
         
     	// Are we filled with water?
-    	state[1] = (me.isWaterDefined() && me.getWater() == 0) ? 0:1;
+    	state[1] = (me.isWaterDefined() && me.getWater() < 3000) ? 0:1;
     	
         // close to a refuge 
         List<EntityID> path = search.breadthFirstSearch(me().getPosition(), refugeIDs);
         state[2] = (path != null && path.size() < 4) ? 1:0;
-         
+        for (EntityID ref : refugeIDs) 
+        	System.out.println("dist to refuge : " + model.getDistance(getID(), ref) );
         // very close to a refuge 
         state[3] = (path != null && path.size() < 2) ? 1:0;
         
          // Is there buildings that are on fire
          Collection<EntityID> all = getBurningBuildings();
          System.out.println("building in fire: " + all.toString());
+         System.out.println("building not explore: " + Integer.toString(unexploredBuildings.size()));
          state[4] = (all != null && all.size() < 1) ? 0:1;
          
          // // Is there buildings that are on fire and close
@@ -232,8 +241,14 @@ public class SampleFireBrigade extends AbstractSampleAgent<FireBrigade> {
         for (StandardEntity next : e) {
             if (next instanceof Building) {
                 Building b = (Building)next;
+                
                 if (b.isOnFire()) {
                     result.add(b);
+
+//                    System.out.println("fire level: " + b.getFieryness());
+//                    System.out.println("fire level: " + b.getFieryness());
+//                    System.out.println("fire temp: " + b.getTemperature());
+//                    System.out.println("fire enum: " + b.getFierynessEnum());
                 }
             }
         }
@@ -249,6 +264,11 @@ public class SampleFireBrigade extends AbstractSampleAgent<FireBrigade> {
             return null;
         }
         return search.breadthFirstSearch(me().getPosition(), objectsToIDs(targets));
+    }
+    private void updateUnexploredBuildings(ChangeSet changed) {
+        for (EntityID next : changed.getChangedEntities()) {
+            unexploredBuildings.remove(next);
+        }
     }
     
 }
