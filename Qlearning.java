@@ -45,8 +45,8 @@ public class Qlearning {
     public static void main(String[] args) 
     {
     	Qlearning qlearning = new Qlearning(7, new int[] {2,2,2,2,2,2,2}, 5, 1, 1, 1);
-    	qlearning.importQvalues("src/sample/Qvalues/model.txt");
-    	qlearning.exportQvalues("src/sample/Qvalues/model1.txt");
+    	//qlearning.importQvalues("src/sample/Qvalues/model.txt");
+    	qlearning.exportQvalues("src/sample/Qvalues/empty.txt");
 		//System.out.println(qlearning.indexQstate(new int[] {1,0,0,0,0,0,0}));
 		qlearning.setNewState(new int[] {0,0,0,0,0,0,1});
 
@@ -134,7 +134,8 @@ public class Qlearning {
      */
     public int getNewAction()
     {
-    	return m_action; 
+    	//double choice = Math.random();
+    	return  m_action; //(int)(Math.random()*m_NB_actions - 1);//
     }
     
     public void importQvalues(String fileName) 
@@ -211,7 +212,7 @@ public class Qlearning {
     		if(m_Qvalues[index_new_state][a] > max_Q_new)
     			 max_Q_new = m_Qvalues[index_new_state][a];
     	double Q = m_lambda * (reward + m_gamma * max_Q_new) + (1 - m_lambda)* m_Qvalues[indexQstate(past_state)][past_action];
-    	System.out.println("val Q : " + Double.toString(Q));
+    	System.out.println("val Q : " + Q);
     	return Q;
     	//return Qval_new; 
     }
@@ -223,8 +224,8 @@ public class Qlearning {
     	int indexState = indexQstate(m_state); 
     	
     	System.out.println("val : " + indexState);
-    	for(int i = 0 ; i < m_NB_actions ; i++)
-    		System.out.println("val : " + Double.toString(m_Qvalues[indexState][i]));
+//    	for(int i = 0 ; i < m_NB_actions ; i++)
+//    		System.out.println("val : " + Double.toString(m_Qvalues[indexState][i]));
     	
     	for(int i = 0 ; i < m_NB_actions ; i++)
     		denominator += Math.exp(m_Qvalues[indexState][i]/ m_temperature);

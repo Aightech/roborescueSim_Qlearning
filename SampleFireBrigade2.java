@@ -29,7 +29,7 @@ import rescuecore2.score.ScoreFunction;
 /**
    A sample fire brigade agent.
  */
-public class SampleFireBrigade extends AbstractSampleAgent<FireBrigade> {
+public class SampleFireBrigade2 extends AbstractSampleAgent<FireBrigade> {
     private static final String MAX_WATER_KEY = "fire.tank.maximum";
     private static final String MAX_DISTANCE_KEY = "fire.extinguish.max-distance";
     private static final String MAX_POWER_KEY = "fire.extinguish.max-sum";
@@ -42,8 +42,8 @@ public class SampleFireBrigade extends AbstractSampleAgent<FireBrigade> {
     private int turn_score =0;
     private int last_hp = 10000;
     private double last_nb_fire_building = 0;
-    private double building_weight=1;
-    private double hp_weight = 1;
+    private double building_weight=10;
+    private double hp_weight = 10;
     private Collection<EntityID> unexploredBuildings;
 
 
@@ -62,10 +62,10 @@ public class SampleFireBrigade extends AbstractSampleAgent<FireBrigade> {
         maxDistance = config.getIntValue(MAX_DISTANCE_KEY);
         maxPower = config.getIntValue(MAX_POWER_KEY);
         Logger.info("Sample fire brigade connected: max extinguish distance = " + maxDistance + ", max power = " + maxPower + ", max tank = " + maxWater);
-        System.out.println("Fire agent lauched");
+        System.out.println("Fire agent 2 lauched");
         unexploredBuildings = new HashSet<EntityID>(buildingIDs);
         
-        qlearning.importQvalues("src/sample/Qvalues/modelFireMod.txt");
+        qlearning.importQvalues("src/sample/Qvalues/modelFire2.txt");
         
         
         //qlearning.importQvalues("test.txt");
@@ -77,7 +77,7 @@ public class SampleFireBrigade extends AbstractSampleAgent<FireBrigade> {
     protected void think(int time, ChangeSet changed, Collection<Command> heard) 
     {
     	if(time%5==0)
-    		qlearning.exportQvalues("src/sample/Qvalues/testfire5.txt");
+    		qlearning.exportQvalues("src/sample/Qvalues/test.txt");
     	System.out.println("Fire agent think");
     	updateUnexploredBuildings(changed);
     	if(unexploredBuildings.size() < 10)
@@ -134,11 +134,11 @@ public class SampleFireBrigade extends AbstractSampleAgent<FireBrigade> {
 		            	 }		            	 
 		             }
 	    		 }
-	    		 turn_score -= 10;
+	    		 turn_score -= 1;
 	    		 break;
 	             
 	    	}
-	    	case 3://go explore
+	    	case 3://go random
 	    	{
 	    		List<EntityID> path = search.breadthFirstSearch(me().getPosition(), unexploredBuildings);
 	            if(path==null)
@@ -149,7 +149,6 @@ public class SampleFireBrigade extends AbstractSampleAgent<FireBrigade> {
 	    	}
 	    	case 4://extinguish
 	    	{
-	    		
 	    		Collection<EntityID> all = getBurningBuildings();
 	            for (EntityID next : all) 
 	            {
@@ -157,14 +156,10 @@ public class SampleFireBrigade extends AbstractSampleAgent<FireBrigade> {
 	                {
 	                    sendExtinguish(time, next, maxPower);
 	                    System.out.println("Fire agent do : extinguish");
-	                    if(me().getWater()<1000)
-	    	        		turn_score -= 10;
-	                    else
-	                    	turn_score += 30;
 	                    break;
 	                }
 	            }
-	            turn_score -= 10;
+	            turn_score -= 1;
 	            break;
 	    	}
 	    	
@@ -172,21 +167,13 @@ public class SampleFireBrigade extends AbstractSampleAgent<FireBrigade> {
     	}
     	
     	//loose HP
-    	//turn_score -= hp_weight*(last_hp - me().getHP());
-    	System.out.println("Score HP : " +  hp_weight*(last_hp - me().getHP()));
-
+    	turn_score -= hp_weight*(last_hp - me().getHP());
     	last_hp = me().getHP();
-    	
     	
     	Collection<EntityID> all = getBurningBuildings();
     	last_nb_fire_building = all.size() - last_nb_fire_building;
     	turn_score -= building_weight*last_nb_fire_building;
-    	System.out.println("Score fire building : " + building_weight*last_nb_fire_building);
     	last_nb_fire_building += (all.size() - last_nb_fire_building)*0.2;
-    	if(me().getWater()>13000 && (action==1 || action == 0))
-    		turn_score -= 10;
-    	if(me().getWater()>13000 || (me().getWater()<13000 && action==1))
-    		turn_score += 2;
 
     	
     }
@@ -200,18 +187,21 @@ public class SampleFireBrigade extends AbstractSampleAgent<FireBrigade> {
     	int[] state = new int[nbFeatures];
     	
     	
-    	// Are we currently filling with water?
+    	// Are we currently full of water?
     	state[0] = (me.isWaterDefined() && me.getWater() < 14000) ? 0:1; //(me.isWaterDefined() && me.getWater() < maxWater && location() instanceof Refuge)?1:0;
         
-    	// Are we filled with water?
+    	// Are we filled with some water?
     	state[1] = (me.isWaterDefined() && me.getWater() < 3000) ? 0:1;
     	
         // close to a refuge 
-        List<EntityID> path = search.breadthFirstSearch(me().getPosition(), refugeIDs);
-        state[2] = (path != null && path.size() < 4) ? 1:0;
+        state[2] = 0; 
         for (EntityID ref : refugeIDs) 
-        	System.out.println("dist to refuge : " + model.getDistance(getID(), ref) );
+        	if(model.getDistance(getID(), ref) < 60000)
+        		state[2] = 1; 
+        	//System.out.println("dist to refuge : " + model.getDistance(getID(), ref) );
+        
         // very close to a refuge 
+        List<EntityID> path = search.breadthFirstSearch(me().getPosition(), refugeIDs);
         state[3] = (path != null && path.size() < 2) ? 1:0;
         
          // Is there buildings that are on fire
@@ -222,33 +212,23 @@ public class SampleFireBrigade extends AbstractSampleAgent<FireBrigade> {
          
          // // Is there buildings that are on fire and close
          boolean burningClose=false;
-         boolean burningClose2=false;
          for (EntityID next : all) 
-         {
-        	 path = search.breadthFirstSearch(me().getPosition(), next);
-        	 
-        	 if(path.size() < 4)
-        		 burningClose = true;
         	 if (model.getDistance(getID(), next) <= maxDistance)
-        		 burningClose2 = true;
-
-        		 
-         }
-         
-     
+        		 burningClose = true;
          state[5] = (burningClose)?1:0;
          
-         state[6] = (burningClose2)?1:0;
+         //is there a fireman close to us
+         boolean close_to_fireBrigade=false;
+         for (FireBrigade next : getFireColeague()) 
+        	 if (model.getDistance(getID(), next.getID()) <= maxDistance)
+        		 close_to_fireBrigade = true;
+         state[6] = (close_to_fireBrigade)?1:0;
+         
+         
          System.out.println("Level water: " + Integer.toString(me.getWater()));
          System.out.println("hp: " + Integer.toString(me.getHP()));
          System.out.println("Fire agent state [" + ((state[0]==0)?"not filling":"filling") + " , "+ ((state[1]==0)?"empty":"filled") + " , "+ ((state[2]==0)?"not close to R":"close to R") + " , "+ ((state[3]==0)?"not very close to R":"very close to R") + " , "+ ((state[4]==0)?"no fire":"building on fire") + " , "+ ((state[5]==0)?"not close to 1":"close to 1") + " , "+ ((state[6]==0)?"not close to 2":"close to 2") + " ] ");
 
-         boolean close_to_fireBrigade=false;
-         for (FireBrigade next : getFireColeague()) {
-        	 if (model.getDistance(getID(), next.getID()) <= maxDistance)
-        		 close_to_fireBrigade = true;
-
-         }
          
     	return state; 
     }
